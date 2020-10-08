@@ -1,0 +1,56 @@
+version: '3.3'
+
+services:
+
+  db:
+    image: mysql
+    restart: always
+    volumes:
+      - "./mysql:/var/lib/mysql"
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: E960224rE
+      MYSQL_DATABASE: django_docker
+      MYSQL_USER: django
+      MYSQL_PASSWORD: E960224rE
+    networks:
+      - db_network
+
+
+  django_docker:
+    build: .
+    env_file:
+      - ./.env
+    volumes:
+      - .:/opt/services/django_docker/src
+      - static_volume:/opt/services/django_docker/static
+      - media_volume:/opt/services/django_docker/media
+    networks:
+      - nginx_network
+      - db_network
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - 80:80
+    volumes:
+      - ./config/nginx/conf.d:/etc/nginx/conf.d
+      - static_volume:/opt/services/django_docker/static
+      - media_volume:/opt/services/django_docker/media
+    depends_on:
+      - django_docker
+    networks:
+      - nginx_network
+
+networks:
+  nginx_network:
+    driver: bridge
+  db_network:
+    driver: bridge
+
+volumes:
+  static_volume:
+  media_volume:
